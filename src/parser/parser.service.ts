@@ -2,13 +2,19 @@ import { Injectable } from "@nestjs/common";
 import { Browser, Builder, By } from "selenium-webdriver";
 import { Options } from "selenium-webdriver/chrome";
 import { IParserService } from "./interfaces/IParserService";
+import { IContent } from "./interfaces/IContent";
 
 require("chromedriver");
 
 @Injectable()
 export class ParserService implements IParserService {
+  contents: Array<IContent>;
 
-  async scrape(url: string): Promise<string[]> {
+  constructor() {
+    this.contents = [];
+  }
+
+  async scrape(url: string): Promise<void> {
     const chromeOptions = new Options();
     chromeOptions.addArguments("--disable-software-rasterizer");
     chromeOptions.addArguments("--disable-gpu");
@@ -34,8 +40,8 @@ export class ParserService implements IParserService {
         }
       }
      // console.log(links);
-      let parsed = [];
-      parsed.push({
+
+      this.contents.push({
         "url": url,
         "title": title,
         "content": mainPageContent
@@ -45,18 +51,21 @@ export class ParserService implements IParserService {
         const pageTitle = await driver.getTitle();
         await driver.manage().setTimeouts({ implicit: 5000 });
         const pageContent = await driver.findElement(By.tagName("body")).getText();
-        parsed.push({
+        this.contents.push({
           "url": link,
           "title": pageTitle,
           "content": pageContent
         });
       }
-     // console.log(parsed);
-      return parsed;
+      console.log(this.contents);
     } catch (error) {
       throw (error);
     } finally {
       await driver.quit();
     }
+  }
+
+  async getContent(): Promise<IContent[]>{
+    return this.contents;
   }
 }
